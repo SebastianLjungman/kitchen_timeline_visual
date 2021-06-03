@@ -1,7 +1,7 @@
 <template>
   <div>
     <svg :viewBox="getViewBox">
-     <rect v-for="(line, index) in lines" :x="line.start" y="0" :width="line.width" height="100000" :key="index" :class="line.class" :alt="getDate(line.start) + ' - ' + getDuration(line.width)" @mouseover="showDetails"/>
+     <rect v-for="(line, index) in lines" :x="line.start" y="0" :width="line.width" height="100000" :key="index" :class="line.class" @mouseover="showDetails"/>
     </svg>
   </div>
 </template>
@@ -11,8 +11,8 @@ export default {
   name: 'Timeline',
   props: {
     data: Array,
-    offset: Number,
-    max: Number
+    max: Number,
+    offset: Number
   },
   computed: {
     lines() {
@@ -24,12 +24,12 @@ export default {
           start = item.time-this.offset;
         }
         else if (item.state === "off") {
-          if (start + this.offset < latestEnd) {
+          if (start < latestEnd) {
             start = latestEnd;
           }
           lines.push({start: start, width: item.time-start-this.offset, class: "normal"})
           start = null;
-          latestEnd = item.time;
+          latestEnd = item.time-this.offset;
         }
         else if (item.state !== "on") {
           lines.push({start: start, width: 43200, class: "error"});
@@ -39,19 +39,13 @@ export default {
       return lines;
     },
     getViewBox() {
-      return `0 0 2000000 100000`;
+      return `0 0 ${this.max} 100000`;
     }
   },
   methods: {
-    getDate(time) {
-      const date = new Date((time+this.offset) * 1000)
-      return `${date.getDate()}/${date.getMonth()} ${date.getHours()}:${date.getMinutes()}`
-    },
-    getDuration(time) {
-      return `${Math.floor(time/3600)} h, ${time%60} min`
-    },
     showDetails(e) {
-      this.$emit('info', e);
+      console.log(e.target.x.baseVal.value)
+      this.$emit('info', {start: e.target.x.baseVal.value, duration: e.target.width.baseVal.value, pageX: e.pageX, pageY: e.pageY});
     }
   }
 }
