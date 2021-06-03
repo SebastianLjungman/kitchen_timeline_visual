@@ -71,7 +71,7 @@ export default {
       this.infoLocation = {left: d.pageX, top: d.pageY-5}
     },
     getDate(time) {
-      const date = new Date((time + this.offset) * 1000)
+      const date = new Date((time + Number.parseInt(this.offset)) * 1000)
       return `${date.getDate()}/${date.getMonth()+1} ${date.getHours()}:${date.getMinutes()}`
     },
     getDuration(time) {
