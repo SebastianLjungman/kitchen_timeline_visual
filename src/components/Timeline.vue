@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div id="viewBoxWrapper">
     <svg :viewBox="getViewBox">
      <rect v-for="(line, index) in lines" :x="line.start" y="0" :width="line.width" height="100000" :key="index" :class="line.class" @mouseover="showDetails"/>
     </svg>
@@ -27,7 +27,10 @@ export default {
           if (start < latestEnd) {
             start = latestEnd;
           }
-          lines.push({start: start, width: item.time-start-this.offset, class: "normal"})
+          //Extracts class by removing last character (number). Assumes less than 10 appliances!
+          let machineClass = item.machine.slice(0, -1);
+
+          lines.push({start: start, width: item.time-start-this.offset, class: [item.machine, machineClass]})
           start = null;
           latestEnd = item.time-this.offset;
         }
@@ -45,13 +48,19 @@ export default {
   methods: {
     showDetails(e) {
       console.log(e.target.x.baseVal.value)
-      this.$emit('info', {start: e.target.x.baseVal.value, duration: e.target.width.baseVal.value, pageX: e.pageX, pageY: e.pageY});
+      console.log(e.target.classList[0]);
+      this.$emit('info', {start: e.target.x.baseVal.value, duration: e.target.width.baseVal.value, pageX: e.pageX, pageY: e.pageY, machineName: e.target.classList[0]});
     }
   }
 }
 </script>
 
 <style scoped>
+
+#viewBoxWrapper {
+  margin-left: 40px;
+}
+
 svg {
   border-top: 1px dotted lightgray;
 }
@@ -59,6 +68,45 @@ svg {
   fill: black;
 }
 .error {
-  fill: red;
+  fill: rgb(255, 0, 200);
 }
+
+
+
+.frima {
+  fill: #FF516C;
+}
+
+.frying {
+  fill: #FBCC3C;
+}
+
+.boiler {
+  fill: #00E0FF;
+}
+
+.oven {
+  fill: #BC74FF;
+}
+
+.ovenS {
+  fill: #219653;
+}
+
+.stoveS {
+  fill: #6FCF97;
+}
+
+.roughDish {
+  fill: #079dcfea;
+}
+
+.tunnelDish {
+  fill: #079dcfea;
+}
+
+.serving {
+  fill: #ff0000;
+}
+
 </style>
