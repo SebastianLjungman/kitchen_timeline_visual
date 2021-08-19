@@ -6,7 +6,7 @@
       <legend>Start <input type="range" :min="offsetInit" :max="offsetMax" v-model="offset"></legend>
       <legend>Zoom<input type="range" min="200000" max="3000000" v-model="max"></legend>
       <legend>Graph Height<input id="slider" type="range" min="590" max="2000" v-model="graphHeight"></legend>
-      <input type="button" @click="changeGrafanaURL">
+      <!-- <input type="button" @click="changeGrafanaURL"> -->
     <div class="wrapper" v-for="(machine, mkey)  in machines" :key="'m'+mkey">
       <div id="machineNamesList">
         {{machine}}
@@ -22,6 +22,7 @@
 <script>
 
 import Timeline from "@/components/Timeline.vue";
+import axios from "axios";
 
 export default {
   components: {
@@ -38,7 +39,7 @@ export default {
       info: "",
       infoLocation: {left: 0, top: 0},
 
-      //Sebastians additions: previous grafana from value: 1620275400000, to value: 1622270100 
+      //Sebastian's additions: previous grafana from value: 1620275400000, to value: 1622270100 
       graphHeight: 900,
       grafanaSrc: "https://view.stuns.i0t.se/grafana/d-solo/UV-lugCGz/tiunda-effekt-med-nivaer?orgId=3&from=1620270000000&to=1622270100000&theme=light&panelId=9",
       
@@ -54,21 +55,56 @@ export default {
   },
   methods: {
     fetchData () {
-      fetch("http://user.it.uu.se/~mikla253/sebastian/storedata.php")
+      // fetch("http://user.it.uu.se/~mikla253/sebastian/storedata.php")
+      // .then((response) => {
+      //   if (response.ok) {
+      //     return response.json();
+      //   }
+      //   throw response;
+      // })
+      // .then((json) => {
+      //   this.data = json.data;
+      //   console.log(json.data);
+      // })
+      // .catch((err) => {
+      //   if (err.message) {
+      //     this.setError(err.message);
+      //   }
+      // });
+
+      //Fetches data from MySQL server instead! :) 
+      axios.get('http://localhost/retrieveMachineUsageInfoFromMySQL.php')
       .then((response) => {
-        if (response.ok) {
-          return response.json();
-        }
-        throw response;
-      })
-      .then((json) => {
-        this.data = json.data;
-      })
-      .catch((err) => {
-        if (err.message) {
-          this.setError(err.message);
+        if(response.data) {
+          // console.log(response.data)
+          this.data = response.data;
         }
       });
+
+
+      // fetch("http://localhost/retrieveMachineUsageInfoFromMySQL.php")
+      // .then((response) => {
+      //   if (response.ok) {
+      //     return response.json();
+      //   }
+      //   throw response;
+      // })
+      // .then((json) => {
+      // // .then((json) => {
+      // //   this.data = json.data;
+      // // })
+      // // .catch((err) => {
+      // //   if (err.message) {
+      // //     this.setError(err.message);
+      // //     console.log("Error LOL");
+      // //   }
+      // // });
+      // // let retrievedMachineUsageData = response.data;
+      // // let firstClick = retrievedMachineUsageData[0];
+      // console.log(json.data);
+      // // this.data = [];
+      //   // }
+      // })
     },
     setError(msg) {
       console.log(msg);
@@ -80,6 +116,7 @@ export default {
           ret.push(item)
         }
       }
+      console.log(ret);
       return ret;
     },
     setInfo(d) {

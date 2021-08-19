@@ -21,18 +21,18 @@ export default {
       let latestEnd = null;
       for (let item of this.data) {
         if (item.state === "on" && start === null) {
-          start = item.time-this.offset;
+          start = item.unix_timestamp-this.offset;
         }
         else if (item.state === "off") {
           if (start < latestEnd) {
             start = latestEnd;
           }
-          //Extracts class by removing last character (number). Assumes less than 10 appliances!
+          //Extracts class by removing last character (number). Assumes less than 10 appliances of each kind (with naming convention machineX)!
           let machineClass = item.machine.slice(0, -1);
 
-          lines.push({start: start, width: item.time-start-this.offset, class: [item.machine, machineClass]})
+          lines.push({start: start, width: item.unix_timestamp-start-this.offset, class: [item.machine, machineClass]})
           start = null;
-          latestEnd = item.time-this.offset;
+          latestEnd = item.unix_timestamp-this.offset;
         }
         else if (item.state !== "on") {
           lines.push({start: start, width: 43200, class: "error"});
