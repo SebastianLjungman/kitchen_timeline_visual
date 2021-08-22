@@ -3,7 +3,7 @@
     <div class="info" :style="{left: infoLocation.left+'px' , top: infoLocation.top+'px'}">
       {{info}}
     </div>
-      <legend>Start <input type="range" :min="offsetInit" :max="offsetMax" v-model="offset"></legend>
+      <legend>Start <input type="range" :min="offsetInit" :max="offsetMax2" v-model="offset"></legend>
       <legend>Zoom<input type="range" min="200000" max="3000000" v-model="max"></legend>
       <legend>Graph Height<input id="slider" type="range" min="590" max="2000" v-model="graphHeight"></legend>
       <!-- <input type="button" @click="changeGrafanaURL"> -->
@@ -51,6 +51,10 @@ export default {
   computed: {
     grafanaStart: function(){
       return "https://view.stuns.i0t.se/grafana/d-solo/UV-lugCGz/tiunda-effekt-med-nivaer?orgId=3&from=" + (this.offset * 1000) + "&to=" + (this.offset * 1000 + 2000100000) + "&theme=light&panelId=9"
+    },
+    //Bör funka, även om nya värden inte verkar dyka upp korrekt (FELSÖK!)
+    offsetMax2: function() {
+      return parseInt((new Date().getTime() / 1000).toFixed(0));
     }
   },
   methods: {

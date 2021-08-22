@@ -41,6 +41,7 @@ export default {
       }
       return lines;
     },
+    //try adding one zero for displaying later data??
     getViewBox() {
       return `0 0 ${this.max} 100000`;
     }
