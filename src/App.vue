@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div id="app">
     <div class="info" :style="{left: infoLocation.left+'px' , top: infoLocation.top+'px'}">
       {{info}}
     </div>
@@ -41,16 +41,44 @@ export default {
 
       //Sebastian's additions: previous grafana from value: 1620275400000, to value: 1622270100 
       graphHeight: 900,
-      grafanaSrc: "https://view.stuns.i0t.se/grafana/d-solo/UV-lugCGz/tiunda-effekt-med-nivaer?orgId=3&from=1620270000000&to=1622270100000&theme=light&panelId=9",
-      
+      grafanaSrc: "https://view.stuns.i0t.se/grafana/d/UV-lugCGz/skolkok-effekt-med-nivaer?orgId=3&from=",
+      grafanaSrcDomarringen: "https://view.stuns.i0t.se/grafana/d/UV-lugCGz/skolkok-effekt-med-nivaer?orgId=3&from=",
+      validKitchenNames: ["tiunda", "domarringen", "stenhagen"],
+      kitchenName: null
     }
   },
   created () {
+    let uri = window.location.search.substring(1); 
+    let params = new URLSearchParams(uri);
+    this.kitchenName = params.get("kitchen_name");
+    console.log(this.kitchenName);
+
+
     this.fetchData();
+  },
+    mounted() {
+    //Adress måste innehålla giltigt värde på kitchen_name (se validKitchenNames), t.ex.
+    //http://localhost/visualization_new_school/index.html?kitchen_name=domarringen
+
+    if(this.validKitchenNames.includes(this.kitchenName)) {
+      // alert("Köket existerar!");
+      // this.allMachines = this.tiundaMachines;
+
+    }
+    else {
+      document.getElementById("app").style.display = "none";
+      alert("Köket finns inte med i listan! Kontrollera att rätt adress har angivits!");
+    }
   },
   computed: {
     grafanaStart: function(){
-      return "https://view.stuns.i0t.se/grafana/d-solo/UV-lugCGz/tiunda-effekt-med-nivaer?orgId=3&from=" + (this.offset * 1000) + "&to=" + (this.offset * 1000 + 2000100000) + "&theme=light&panelId=9"
+      if(this.kitchenName === "domarringen") {
+        //Kan viewPanel=10 (domarringen) och viewPanel=9 (tiunda) användas i inbäddad länk? Nuvarande view-länk laddar hela, ej snyggt
+      return this.grafanaSrcDomarringen + (this.offset * 1000) + "&to=" + (this.offset * 1000 + 2000100000) + "&theme=light&viewPanel=10"
+      }
+      else {
+        return this.grafanaSrc + (this.offset * 1000) + "&to=" + (this.offset * 1000 + 2000100000) + "&theme=light&viewPanel=9"
+      }
     },
     //Bör funka, även om nya värden inte verkar dyka upp korrekt (FELSÖK!)
     offsetMax2: function() {
@@ -77,7 +105,7 @@ export default {
       // });
 
       //Fetches data from MySQL server instead! :) 
-      axios.get('http://localhost/retrieveMachineUsageInfoFromMySQL.php')
+      axios.get('http://localhost/retrieveMachineUsageInfoFromMySQL_ALL DATA FOR VISUALIZATION.php', { params: {kitchen_id: this.kitchenName}})
       .then((response) => {
         if(response.data) {
           // console.log(response.data)
