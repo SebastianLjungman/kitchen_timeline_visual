@@ -3,9 +3,12 @@
     <div class="info" :style="{left: infoLocation.left+'px' , top: infoLocation.top+'px'}">
       {{info}}
     </div>
+    <div id="legendContainer">
       <legend>Start <input type="range" :min="offsetInit" :max="offsetMax2" v-model="offset"></legend>
       <legend>Zoom<input type="range" min="200000" max="3000000" v-model="max"></legend>
       <legend>Graph Height<input id="slider" type="range" min="590" max="2000" v-model="graphHeight"></legend>
+    </div>
+    <Foodstats/>
       <!-- <input type="button" @click="changeGrafanaURL"> -->
     <div class="wrapper" v-for="(machine, mkey)  in machines" :key="'m'+mkey">
       <div id="machineNamesList">
@@ -23,15 +26,16 @@
 
 import Timeline from "@/components/Timeline.vue";
 import axios from "axios";
+import Foodstats from './components/Foodstats.vue';
 
 export default {
   components: {
-    Timeline
+    Timeline, Foodstats
   },
   data () {
     return {
       data: [],
-      machines: ['frying1', 'frying2', 'frima1', 'boiler1', 'boiler2', 'boiler3', 'oven1', 'oven2', 'oven3', 'oven4', 'oven5', 'oven6', 'ovenS1', 'stoveS1', 'roughDish1', 'roughDish2', 'tunnelDish1', 'serving1'],
+      machines: null,
       offsetInit: 1620270000,
       offsetMax: 1623000000,
       offset: 1620270000,
@@ -41,8 +45,8 @@ export default {
 
       //Sebastian's additions: previous grafana from value: 1620275400000, to value: 1622270100 
       graphHeight: 900,
-      grafanaSrc: "https://view.stuns.i0t.se/grafana/d/UV-lugCGz/skolkok-effekt-med-nivaer?orgId=3&from=",
-      grafanaSrcDomarringen: "https://view.stuns.i0t.se/grafana/d/UV-lugCGz/skolkok-effekt-med-nivaer?orgId=3&from=",
+      grafanaSrc: "https://view.stuns.i0t.se/grafana/d-solo/UV-lugCGz/skolkok-effekt-med-nivaer?orgId=3&from=",
+      grafanaSrcDomarringen: "https://view.stuns.i0t.se/grafana/d-solo/UV-lugCGz/skolkok-effekt-med-nivaer?orgId=3&from=",
       validKitchenNames: ["tiunda", "domarringen", "stenhagen"],
       kitchenName: null
     }
@@ -53,6 +57,15 @@ export default {
     this.kitchenName = params.get("kitchen_name");
     console.log(this.kitchenName);
 
+    if(this.kitchenName === "tiunda" ) {
+      this.machines = ['frying1', 'frying2', 'frima1', 'boiler1', 'boiler2', 'boiler3', 'oven1', 'oven2', 'oven3', 'oven4', 'oven5', 'oven6', 
+      'ovenS1', 'stoveS1', 'roughDish1', 'roughDish2', 'tunnelDish1', 'serving1'];
+    }
+
+    else if(this.kitchenName === "domarringen") {
+      this.machines = ['boilerS1Dom', 'ovenS1Dom', 'oven1Dom', 'oven2Dom', 'oven3Dom', 'frying1Dom', 'stove1Dom', 
+      'boiler1Dom', 'boiler2Dom', 'boiler3Dom', 'roughDish1Dom', 'tunnelDish1Dom'];
+    }
 
     this.fetchData();
   },
@@ -62,8 +75,6 @@ export default {
 
     if(this.validKitchenNames.includes(this.kitchenName)) {
       // alert("Köket existerar!");
-      // this.allMachines = this.tiundaMachines;
-
     }
     else {
       document.getElementById("app").style.display = "none";
@@ -73,11 +84,11 @@ export default {
   computed: {
     grafanaStart: function(){
       if(this.kitchenName === "domarringen") {
-        //Kan viewPanel=10 (domarringen) och viewPanel=9 (tiunda) användas i inbäddad länk? Nuvarande view-länk laddar hela, ej snyggt
-      return this.grafanaSrcDomarringen + (this.offset * 1000) + "&to=" + (this.offset * 1000 + 2000100000) + "&theme=light&viewPanel=10"
+      return this.grafanaSrcDomarringen + (this.offset * 1000) + "&to=" + (this.offset * 1000 + 2000100000) + "&theme=light&panelId=10"
       }
       else {
-        return this.grafanaSrc + (this.offset * 1000) + "&to=" + (this.offset * 1000 + 2000100000) + "&theme=light&viewPanel=9"
+        return this.grafanaSrc + (this.offset * 1000) + "&to=" + (this.offset * 1000 + 2000100000) + "&theme=light&panelId=9"
+        //https://view.stuns.i0t.se/grafana/d-solo/UV-lugCGz/skolkok-effekt-med-nivaer?orgId=3&from=1630038567802&to=1630060167802&theme=light&panelId=10
       }
     },
     //Bör funka, även om nya värden inte verkar dyka upp korrekt (FELSÖK!)
@@ -87,56 +98,15 @@ export default {
   },
   methods: {
     fetchData () {
-      // fetch("http://user.it.uu.se/~mikla253/sebastian/storedata.php")
-      // .then((response) => {
-      //   if (response.ok) {
-      //     return response.json();
-      //   }
-      //   throw response;
-      // })
-      // .then((json) => {
-      //   this.data = json.data;
-      //   console.log(json.data);
-      // })
-      // .catch((err) => {
-      //   if (err.message) {
-      //     this.setError(err.message);
-      //   }
-      // });
-
-      //Fetches data from MySQL server instead! :) 
-      axios.get('http://localhost/retrieveMachineUsageInfoFromMySQL_ALL DATA FOR VISUALIZATION.php', { params: {kitchen_id: this.kitchenName}})
+      //Fetches data from MySQL server instead! :)
+      //@todo Ändra från localhost till den aktuella platsen för PHP-filen på servern! 
+      axios.get('http://localhost/retrieveMachineUsageInfoFromMySQL_ALL_DATA_FOR_VISUALIZATION.php', { params: {kitchen_id: this.kitchenName}})
       .then((response) => {
         if(response.data) {
           // console.log(response.data)
           this.data = response.data;
         }
       });
-
-
-      // fetch("http://localhost/retrieveMachineUsageInfoFromMySQL.php")
-      // .then((response) => {
-      //   if (response.ok) {
-      //     return response.json();
-      //   }
-      //   throw response;
-      // })
-      // .then((json) => {
-      // // .then((json) => {
-      // //   this.data = json.data;
-      // // })
-      // // .catch((err) => {
-      // //   if (err.message) {
-      // //     this.setError(err.message);
-      // //     console.log("Error LOL");
-      // //   }
-      // // });
-      // // let retrievedMachineUsageData = response.data;
-      // // let firstClick = retrievedMachineUsageData[0];
-      // console.log(json.data);
-      // // this.data = [];
-      //   // }
-      // })
     },
     setError(msg) {
       console.log(msg);
@@ -173,7 +143,6 @@ export default {
   body {
     font-family: sans-serif;
     font-size: 10pt;
-
     margin-top: 45px;
   }
   input[type="range"] {
@@ -196,18 +165,16 @@ export default {
     left: 0;
     z-index: -1;
     margin-left: 80px;
+    margin-top: 100px;
     width: 97%;
-    /* height: 100%; */
-    /* display: grid; */
-    /* grid-template-columns: 80px auto; */
-    /* grid-template-rows: repeat(auto-fill, 20px); */
-    /* overflow: hidden; */
   }
 
   #machineNamesList {
-    /* background: pink; */
-
   }
+
+  #legendContainer {
+  }
+
   legend {
     padding-left: 6.25%;
     background: white;
@@ -215,11 +182,13 @@ export default {
   }
 
   input {
-    /* display: inline;
-    width: auto; */
   }
 
   #slider {
+  }
 
+  foodstats {
+    position: relative;
+    margin-left: 100px;
   }
 </style>
