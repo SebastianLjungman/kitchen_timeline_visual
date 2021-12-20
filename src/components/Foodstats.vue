@@ -1,8 +1,7 @@
 <template>
   <div id="foodStatsWrapper">
-    Från: <input id="datePickerFrom" type="date" :value="pickedDateFrom" v-on:input="showDateFrom">
-    Till: <input id="datePickerTo" type="date" :value="pickedDateTo" v-on:input="showDateTo">
-    <input id="changeTimeIntervalButton" type="button" value="Ändra tidsspann" v-on:click="changeTimeInterval">
+    <div id=""> Datum: <input id="datePicker" type="date" v-model="pickedDate"> </div>
+    <input id="changeDateButton" type="button" value="Ladda data för valt datum" v-on:click="changeDate">
   </div>
 </template>
 
@@ -10,32 +9,28 @@
 export default {
   name: 'Foodstats',
   props: {},
-  data: function () {
+  data: function() {
     return {
-      pickedDateFrom: '2021-09-01',
-      pickedDateTo: '2021-09-02',
+      pickedDate: null,
+      datum: null,
+      // pickedDateTo: '2021-09-02',
     }
   },
   computed: {},
   methods: {
-    showDateFrom(){
-      this.pickedDateFrom = document.getElementById("datePickerFrom").value;
-      var datum = Date.parse(this.pickedDateFrom)/1000;
-      console.log(this.pickedDateFrom);
-      console.log(datum);
+    showDate: function(){
+      console.log(this.pickedDate);
+      console.log("DATUM: " + this.datum);
     },
-    showDateTo(){
-      this.pickedDateTo = document.getElementById("datePickerTo").value;
-      var datum = Date.parse(this.pickedDateTo)/1000;
-      console.log(this.pickedDateTo);
-      console.log(datum);
-    },
-    changeTimeInterval(){
-      if(this.pickedDateTo > this.pickedDateFrom) {
-        alert("valid!");
+    changeDate: function(){
+      this.pickedDate = document.getElementById("datePicker").value;
+      this.datum = Date.parse(this.pickedDate)/1000;
+
+      if(this.pickedDate) {
+        this.$emit("change-date", this.datum);
       }
       else {
-        alert("Datumet Från måste vara innan Till!");
+        alert("Data saknas data för datumet");
       }
     }
   }
@@ -47,5 +42,10 @@ export default {
   position: absolute;
   margin-left: 1300px;
   margin-top: -100px;
+}
+
+#changeDateButton {
+  margin-left: 1%;
+  margin-top: 4%;
 }
 </style>

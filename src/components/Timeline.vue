@@ -12,7 +12,8 @@ export default {
   props: {
     data: Array,
     max: Number,
-    offset: Number
+    offset: Number,
+    currentSchool: null
   },
   computed: {
     lines() {
@@ -28,7 +29,13 @@ export default {
             start = latestEnd;
           }
           //Extracts class by removing last character (number). Assumes less than 10 appliances of each kind (with naming convention machineX)!
-          let machineClass = item.machine.slice(0, -1);
+          
+          let classOffset = -1;
+          if(this.currentSchool === "domarringen") {
+            classOffset = -4;
+          }
+          
+          let machineClass = item.machine.slice(0, classOffset);
 
           lines.push({start: start, width: item.unix_timestamp-start-this.offset, class: [item.machine, machineClass]})
           start = null;
@@ -83,6 +90,10 @@ svg {
 }
 
 .boiler {
+  fill: #00E0FF;
+}
+
+.boilerS {
   fill: #00E0FF;
 }
 

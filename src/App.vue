@@ -4,17 +4,16 @@
       {{info}}
     </div>
     <div id="legendContainer">
-      <legend>Start <input type="range" :min="offsetInit" :max="offsetMax2" v-model="offset"></legend>
-      <legend>Zoom<input type="range" min="200000" max="3000000" v-model="max"></legend>
-      <legend>Graph Height<input id="slider" type="range" min="590" max="2000" v-model="graphHeight"></legend>
+      <legend>Starttid <input id="timeSlider" type="range" :min="offsetInit" :max="offsetMax" v-model="offset"></legend>
+      <legend>Justering<input type="range" min="200000" max="3000000" v-model="max"></legend>
+      <legend>Grafhöjd<input id="slider" type="range" min="590" max="2000" v-model="graphHeight"></legend>
     </div>
-    <Foodstats/>
-      <!-- <input type="button" @click="changeGrafanaURL"> -->
+    <Foodstats @change-date="changeDate"/>
     <div class="wrapper" v-for="(machine, mkey)  in machines" :key="'m'+mkey">
       <div id="machineNamesList">
         {{machine}}
       </div>
-        <Timeline :data="getMachineSeries(machine)" :offset="Number.parseInt(offset)" :max="Number.parseInt(max)" @info="setInfo"/>
+        <Timeline :data="getMachineSeries(machine)" :currentSchool= "kitchenName" :offset="Number.parseInt(offset)" :max="Number.parseInt(max)" @info="setInfo"/>
     </div>
     <div id="gd">
     <iframe id= "grafana" :src="grafanaStart" frameborder="0" :height="graphHeight"></iframe>
@@ -37,7 +36,7 @@ export default {
       data: [],
       machines: null,
       offsetInit: 1620270000,
-      offsetMax: 1623000000,
+      offsetMax: parseInt((new Date().getTime() / 1000).toFixed(0)), //1623000000,
       offset: 1620270000,
       max: 1972000,
       info: "",
@@ -86,18 +85,18 @@ export default {
       if(this.kitchenName === "domarringen") {
       return this.grafanaSrcDomarringen + (this.offset * 1000) + "&to=" + (this.offset * 1000 + 2000100000) + "&theme=light&panelId=10"
       }
-      else {
+      else if (this.kitchenName === "tiunda") {
         return this.grafanaSrc + (this.offset * 1000) + "&to=" + (this.offset * 1000 + 2000100000) + "&theme=light&panelId=9"
         //https://view.stuns.i0t.se/grafana/d-solo/UV-lugCGz/skolkok-effekt-med-nivaer?orgId=3&from=1630038567802&to=1630060167802&theme=light&panelId=10
       }
+      else {
+        console.log("Tiunda is deafult");
+        return this.grafanaSrc + (this.offset * 1000) + "&to=" + (this.offset * 1000 + 2000100000) + "&theme=light&panelId=9"
+      }
     },
-    //Bör funka, även om nya värden inte verkar dyka upp korrekt (FELSÖK!)
-    offsetMax2: function() {
-      return parseInt((new Date().getTime() / 1000).toFixed(0));
-    }
   },
   methods: {
-    fetchData () {
+    fetchData: function() {
       //Fetches data from MySQL server instead! :)
       //@todo Ändra från localhost till den aktuella platsen för PHP-filen på servern! 
       axios.get('http://localhost/retrieveMachineUsageInfoFromMySQL_ALL_DATA_FOR_VISUALIZATION.php', { params: {kitchen_id: this.kitchenName}})
@@ -132,9 +131,9 @@ export default {
     getDuration(time) {
       return `${Math.floor(time/3600)} h, ${Math.floor(time%3600/60)} min`
     },
-    changeGrafanaURL() {
-      this.grafanaSrc = this.grafanaStart;
-      console.log(this.offset)
+    changeDate(newDate) {
+      this.offset = newDate;
+      console.log("New date: " + newDate);
     }
   }
 }
@@ -165,14 +164,8 @@ export default {
     left: 0;
     z-index: -1;
     margin-left: 80px;
-    margin-top: 100px;
+    margin-top: 130px;
     width: 97%;
-  }
-
-  #machineNamesList {
-  }
-
-  #legendContainer {
   }
 
   legend {
@@ -181,10 +174,8 @@ export default {
     width: 97%;
   }
 
-  input {
-  }
-
-  #slider {
+  #legendContainer {
+    margin-bottom: 2%;
   }
 
   foodstats {
