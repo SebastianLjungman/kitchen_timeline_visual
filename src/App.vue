@@ -1,17 +1,19 @@
 <template>
-  <div>
+  <div id="app">
     <div class="info" :style="{left: infoLocation.left+'px' , top: infoLocation.top+'px'}">
       {{info}}
     </div>
-      <legend>Start <input type="range" :min="offsetInit" :max="offsetMax" v-model="offset"></legend>
-      <legend>Zoom<input type="range" min="200000" max="3000000" v-model="max"></legend>
-      <legend>Graph Height<input id="slider" type="range" min="590" max="2000" v-model="graphHeight"></legend>
-      <input type="button" @click="changeGrafanaURL">
+    <div id="legendContainer">
+      <legend>Starttid <input id="timeSlider" type="range" :min="offsetInit" :max="offsetMax" v-model="offset"></legend>
+      <legend>Justering<input type="range" min="200000" max="3000000" v-model="max"></legend>
+      <legend>Grafhöjd<input id="slider" type="range" min="590" max="2000" v-model="graphHeight"></legend>
+    </div>
+    <Foodstats @change-date="changeDate"/>
     <div class="wrapper" v-for="(machine, mkey)  in machines" :key="'m'+mkey">
       <div id="machineNamesList">
         {{machine}}
       </div>
-        <Timeline :data="getMachineSeries(machine)" :offset="Number.parseInt(offset)" :max="Number.parseInt(max)" @info="setInfo"/>
+        <Timeline :data="getMachineSeries(machine)" :currentSchool= "kitchenName" :offset="Number.parseInt(offset)" :max="Number.parseInt(max)" @info="setInfo"/>
     </div>
     <div id="gd">
     <iframe id= "grafana" :src="grafanaStart" frameborder="0" :height="graphHeight"></iframe>
@@ -22,51 +24,86 @@
 <script>
 
 import Timeline from "@/components/Timeline.vue";
+import axios from "axios";
+import Foodstats from './components/Foodstats.vue';
 
 export default {
   components: {
-    Timeline
+    Timeline, Foodstats
   },
   data () {
     return {
       data: [],
-      machines: ['frying1', 'frying2', 'frima1', 'boiler1', 'boiler2', 'boiler3', 'oven1', 'oven2', 'oven3', 'oven4', 'oven5', 'oven6', 'ovenS1', 'stoveS1', 'roughDish1', 'roughDish2', 'tunnelDish1', 'serving1'],
+      machines: null,
       offsetInit: 1620270000,
-      offsetMax: 1623000000,
+      offsetMax: parseInt((new Date().getTime() / 1000).toFixed(0)), //1623000000,
       offset: 1620270000,
       max: 1972000,
       info: "",
       infoLocation: {left: 0, top: 0},
 
-      //Sebastians additions: previous grafana from value: 1620275400000, to value: 1622270100 
+      //Sebastian's additions: previous grafana from value: 1620275400000, to value: 1622270100 
       graphHeight: 900,
-      grafanaSrc: "https://view.stuns.i0t.se/grafana/d-solo/UV-lugCGz/tiunda-effekt-med-nivaer?orgId=3&from=1620270000000&to=1622270100000&theme=light&panelId=9",
-      
+      grafanaSrc: "https://view.stuns.i0t.se/grafana/d-solo/UV-lugCGz/skolkok-effekt-med-nivaer?orgId=3&from=",
+      grafanaSrcDomarringen: "https://view.stuns.i0t.se/grafana/d-solo/UV-lugCGz/skolkok-effekt-med-nivaer?orgId=3&from=",
+      validKitchenNames: ["tiunda", "domarringen", "stenhagen"],
+      kitchenName: null
     }
   },
   created () {
+    let uri = window.location.search.substring(1); 
+    let params = new URLSearchParams(uri);
+    this.kitchenName = params.get("kitchen_name");
+    console.log(this.kitchenName);
+
+    if(this.kitchenName === "tiunda" ) {
+      this.machines = ['frying1', 'frying2', 'frima1', 'boiler1', 'boiler2', 'boiler3', 'oven1', 'oven2', 'oven3', 'oven4', 'oven5', 'oven6', 
+      'ovenS1', 'stoveS1', 'roughDish1', 'roughDish2', 'tunnelDish1', 'serving1'];
+    }
+
+    else if(this.kitchenName === "domarringen") {
+      this.machines = ['boilerS1Dom', 'ovenS1Dom', 'oven1Dom', 'oven2Dom', 'oven3Dom', 'frying1Dom', 'stove1Dom', 
+      'boiler1Dom', 'boiler2Dom', 'boiler3Dom', 'roughDish1Dom', 'tunnelDish1Dom'];
+    }
+
     this.fetchData();
+  },
+    mounted() {
+    //Adress måste innehålla giltigt värde på kitchen_name (se validKitchenNames), t.ex.
+    //http://localhost/visualization_new_school/index.html?kitchen_name=domarringen
+
+    if(this.validKitchenNames.includes(this.kitchenName)) {
+      // alert("Köket existerar!");
+    }
+    else {
+      document.getElementById("app").style.display = "none";
+      alert("Köket finns inte med i listan! Kontrollera att rätt adress har angivits!");
+    }
   },
   computed: {
     grafanaStart: function(){
-      return "https://view.stuns.i0t.se/grafana/d-solo/UV-lugCGz/tiunda-effekt-med-nivaer?orgId=3&from=" + (this.offset * 1000) + "&to=" + (this.offset * 1000 + 2000100000) + "&theme=light&panelId=9"
-    }
+      if(this.kitchenName === "domarringen") {
+      return this.grafanaSrcDomarringen + (this.offset * 1000) + "&to=" + (this.offset * 1000 + 2000100000) + "&theme=light&panelId=10"
+      }
+      else if (this.kitchenName === "tiunda") {
+        return this.grafanaSrc + (this.offset * 1000) + "&to=" + (this.offset * 1000 + 2000100000) + "&theme=light&panelId=9"
+        //https://view.stuns.i0t.se/grafana/d-solo/UV-lugCGz/skolkok-effekt-med-nivaer?orgId=3&from=1630038567802&to=1630060167802&theme=light&panelId=10
+      }
+      else {
+        console.log("Tiunda is deafult");
+        return this.grafanaSrc + (this.offset * 1000) + "&to=" + (this.offset * 1000 + 2000100000) + "&theme=light&panelId=9"
+      }
+    },
   },
   methods: {
-    fetchData () {
-      fetch("http://user.it.uu.se/~mikla253/sebastian/storedata.php")
+    fetchData: function() {
+      //Fetches data from MySQL server instead! :)
+      //@todo Ändra från localhost till den aktuella platsen för PHP-filen på servern! 
+      axios.get('http://localhost/retrieveMachineUsageInfoFromMySQL_ALL_DATA_FOR_VISUALIZATION.php', { params: {kitchen_id: this.kitchenName}})
       .then((response) => {
-        if (response.ok) {
-          return response.json();
-        }
-        throw response;
-      })
-      .then((json) => {
-        this.data = json.data;
-      })
-      .catch((err) => {
-        if (err.message) {
-          this.setError(err.message);
+        if(response.data) {
+          // console.log(response.data)
+          this.data = response.data;
         }
       });
     },
@@ -80,6 +117,7 @@ export default {
           ret.push(item)
         }
       }
+      console.log(ret);
       return ret;
     },
     setInfo(d) {
@@ -93,9 +131,9 @@ export default {
     getDuration(time) {
       return `${Math.floor(time/3600)} h, ${Math.floor(time%3600/60)} min`
     },
-    changeGrafanaURL() {
-      this.grafanaSrc = this.grafanaStart;
-      console.log(this.offset)
+    changeDate(newDate) {
+      this.offset = newDate;
+      console.log("New date: " + newDate);
     }
   }
 }
@@ -104,7 +142,6 @@ export default {
   body {
     font-family: sans-serif;
     font-size: 10pt;
-
     margin-top: 45px;
   }
   input[type="range"] {
@@ -127,30 +164,22 @@ export default {
     left: 0;
     z-index: -1;
     margin-left: 80px;
+    margin-top: 130px;
     width: 97%;
-    /* height: 100%; */
-    /* display: grid; */
-    /* grid-template-columns: 80px auto; */
-    /* grid-template-rows: repeat(auto-fill, 20px); */
-    /* overflow: hidden; */
   }
 
-  #machineNamesList {
-    /* background: pink; */
-
-  }
   legend {
     padding-left: 6.25%;
     background: white;
     width: 97%;
   }
 
-  input {
-    /* display: inline;
-    width: auto; */
+  #legendContainer {
+    margin-bottom: 2%;
   }
 
-  #slider {
-
+  foodstats {
+    position: relative;
+    margin-left: 100px;
   }
 </style>

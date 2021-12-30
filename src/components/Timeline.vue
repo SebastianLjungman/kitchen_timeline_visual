@@ -12,7 +12,8 @@ export default {
   props: {
     data: Array,
     max: Number,
-    offset: Number
+    offset: Number,
+    currentSchool: null
   },
   computed: {
     lines() {
@@ -21,18 +22,24 @@ export default {
       let latestEnd = null;
       for (let item of this.data) {
         if (item.state === "on" && start === null) {
-          start = item.time-this.offset;
+          start = item.unix_timestamp-this.offset;
         }
         else if (item.state === "off") {
           if (start < latestEnd) {
             start = latestEnd;
           }
-          //Extracts class by removing last character (number). Assumes less than 10 appliances!
-          let machineClass = item.machine.slice(0, -1);
+          //Extracts class by removing last character (number). Assumes less than 10 appliances of each kind (with naming convention machineX)!
+          
+          let classOffset = -1;
+          if(this.currentSchool === "domarringen") {
+            classOffset = -4;
+          }
+          
+          let machineClass = item.machine.slice(0, classOffset);
 
-          lines.push({start: start, width: item.time-start-this.offset, class: [item.machine, machineClass]})
+          lines.push({start: start, width: item.unix_timestamp-start-this.offset, class: [item.machine, machineClass]})
           start = null;
-          latestEnd = item.time-this.offset;
+          latestEnd = item.unix_timestamp-this.offset;
         }
         else if (item.state !== "on") {
           lines.push({start: start, width: 43200, class: "error"});
@@ -41,6 +48,7 @@ export default {
       }
       return lines;
     },
+    //try adding one zero for displaying later data??
     getViewBox() {
       return `0 0 ${this.max} 100000`;
     }
@@ -82,6 +90,10 @@ svg {
 }
 
 .boiler {
+  fill: #00E0FF;
+}
+
+.boilerS {
   fill: #00E0FF;
 }
 

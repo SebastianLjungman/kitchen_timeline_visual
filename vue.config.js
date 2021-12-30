@@ -1,5 +1,5 @@
 module.exports = {
   publicPath: process.env.NODE_ENV === 'production'
-    ? '/~mikla253/sebastian/log'
+    ? '/visualization_new_school'//'/~mikla253/sebastian/log'
     : '/'
 }
